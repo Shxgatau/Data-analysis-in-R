@@ -1,0 +1,38 @@
+<html>
+	<head>
+		<link rel=stylesheet type="text/css" href="1.css">
+	</head>
+	<body>
+	<script>
+		var s;var a;var fon;var d;
+		document.write("<table>");
+		for (i=1; i<=10; i++)
+			{document.write("<tr>")
+			for (j=1;j<=10; j++)
+				{if (j<=i) s="class='r1'"; else s="class='r2'";
+				if (s=="class='r1'") fon="style='width: 50px; height: 50px;color: black;'"; else fon="style='width: 50px; height: 50px;color: white;'";
+				if (j%2==0) {d=(i-1)*10+j;document.write("<td "+s+" "+fon+">"+d+ "</td>")} else document.write("<td "+s+" "+fon+"></td>");
+				}
+			document.write("</tr>");
+			}
+		document.write("</table>");
+		document.write("<table>");
+		a=1;
+		s="class='r2'";
+		for (i=1; i<=10; i++)
+			{document.write("<tr>")
+			for (j=1;j<=10; j++)
+				{
+				if (s=="class='r2'" && a<2) {s="class='r2'";console.log(a)} else 
+				if (s=="class='r3'") {s="class='r2'";a=0} 
+				else {s="class='r3'";a=0};
+				
+				document.write("<td "+s+"> </td>");
+				a++;
+				}
+			document.write("</tr>");
+			}
+		document.write("</table>");
+	</script>
+	</body>
+</html>

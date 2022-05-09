@@ -1,0 +1,23 @@
+<html>
+<head>
+<script>
+function gd()
+{
+var today= new Date();
+var dayn=new Array('воскресенье',
+'понедельник','вторник','среда',
+'четверг','пятница','суббота');
+var monthn=new Array('января',
+'февраля','марта','апреля',
+'мая','июня','июля','августа',
+'сентября','октября','ноября','декабря');
+console.log(today.getYear());
+var res="Сегодня " + today.getDate() + " " + monthn[today.getMonth()]+ " " + today.getFullYear() + " года " + dayn[today.getDay()];
+document.write(res);
+}
+</script>
+</head>
+<body onLoad="gd()">
+
+</body>
+</html>

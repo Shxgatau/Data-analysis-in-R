@@ -1,0 +1,38 @@
+<html>
+<head>
+<script>
+function gd()
+{
+var year= parseInt(prompt("Введите год рождения",""));
+var month = parseInt(prompt("Введите номер месяца рождения","")) - 1;
+var day = parseInt(prompt("Введите день рождения",""));
+var bd = new Date();
+bd.setFullYear(year,month,day);
+var today = new Date();
+var beg=new Date(today.getFullYear(),0,1);
+var end=new Date(bd.getFullYear(),0,1);
+console.log((today.getTime()-bd.getTime())/86400000);
+days=(today.getTime()-beg.getTime())/86400000;
+daysn=days-(bd.getTime()-end.getTime())/86400000;
+
+console.log(daysn);
+console.log(days);
+//bd=bd.getTime()/86400000;
+if (today.getTime()-bd.getTime()>=0)
+var res = (today.getFullYear()-bd.getFullYear())*365+(today.getFullYear()-bd.getFullYear())/4+days;
+else var res = (today.getFullYear()-bd.getFullYear())*365+(today.getFullYear()-bd.getFullYear())/4+daysn;
+//res = res/86400000;
+res=Math.floor(res);
+p1=document.getElementById('f1');
+p1.value=res;
+}
+</script>
+</head>
+<body onLoad="gd()">
+<form>
+Я прожил всего 
+<input type=’text’ id='f1' size=8>
+ дней
+</form>
+</body>
+</html>

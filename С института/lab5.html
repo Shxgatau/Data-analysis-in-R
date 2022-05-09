@@ -1,0 +1,31 @@
+<head>
+<style>body{background-color:#dfd8c5; color: blue}</style>
+<script>
+var mess = new Array("","Форд, $34520",
+"Porshe 911, 8116000 Р",
+"Bugatti, 220000000 Р","Bentley, 8200000 Р");
+function doEvent(num)
+{
+// переменная cv объект с именем info Форд, $34520 Porshe 911, 8116000 Р Bugatti, 220000000 Р Bentley, 8200000 Р
+var cv=document.getElementById('info');
+// меняем свойство value объекта cv на соответствующий элемент
+
+cv.value= mess[num];
+}
+</script>
+</head>
+<body>
+<h1>Продаются автомобили:</h1>
+<form>
+<div>
+<img id='slide1' src="1.jpeg" onMouseOver="doEvent(1);" onMouseOut="doEvent(0);" />
+<img id='slide2' src="2.jpeg" onMouseOver="doEvent(2);" onMouseOut="doEvent(0);" />
+</div>
+<div>
+<img id='slide3' src="3.jpeg" onMouseOver="doEvent(3);" onMouseOut="doEvent(0);" />
+<img id='slide4' src="4.jpeg" onMouseOver="doEvent(4);" onMouseOut="doEvent(0);" />
+</div>
+<br>
+<input name="info" id='info' type="text" value="" size="50">
+</form>
+</body>

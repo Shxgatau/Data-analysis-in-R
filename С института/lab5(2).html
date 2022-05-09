@@ -1,0 +1,26 @@
+<head>
+<style> img{width:200;height:200}</style>
+<script>
+i=0;
+function slideShow()
+{
+// массив картинок
+ris = new Array('1.jpeg', '2.jpeg', '3.jpeg', '4.jpeg');
+// Проверяем, Не вышел ли счётчик за пределы массива
+if (i >= 4) i = 0; // если вышел, обнуляем счётчик.
+//переменная r объект с именем slide
+r=document.getElementById('slide')
+// Меняем свойство src этого объекта на элемент из массива
+r.src=ris[i];
+i++; // Увеличиваем счётчик
+// вызываем эту же функцию через каждые 1500 мс
+
+}
+</script>
+</head>
+<body>
+<h1> слайд-шоу </h1>
+<img id='slide' src="1.jpeg" />
+<form>
+<input type="button" value=" Показать следующую " onClick="slideShow() ;">
+</form></body>

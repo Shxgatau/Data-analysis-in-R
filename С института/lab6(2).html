@@ -1,0 +1,70 @@
+<head>	
+<style>
+body {background-color: #00008b; font-size: 22px;font-style: italic; color: white;}
+img {border: 50px outset #ffA089; height: 200px; width: 200px; margin: 5px;}
+#s {border:  5px outset #ffA089; display: inline-block;}
+#s2 {display: none;}
+</style>
+<script>
+//var reader = new FileReader();
+//reader.onload = function(event) {
+ //   var contents = event.target.result;
+	//r1=document.getElementById('s')
+   // r1.value=contents;
+//};
+//reader.readAsText('Анненский.txt');
+i=0;
+function f()
+{
+// объект буква Z
+r1=document.getElementById('s')
+r3=document.getElementById('s2')
+// объект кнопка
+r2=document.getElementById('e2')
+if (i==0)
+{
+// у объекта r1 есть свойство style. Это тоже объект
+// меняем у объекта style свойство color
+r1.style.display='none';
+// меняем у объекта r2 свойство value
+r3.style.display='block';
+i=1;}
+else
+{
+r1.style.display='block'; r2.value='показать текст';r3.style.display='none';
+i=0
+}
+}
+</script>
+</head>
+<body>
+<input type="button" id='e2' value="показать свечку"
+onClick="f()">
+<br>
+<h2>Иннокентий Анненский</h2>
+<h1> Свечку внесли</h1>
+<form>
+<div id="s" >Не мерещится ль вам иногда,<br>
+Когда сумерки ходят по дому,<br>
+Тут же возле иная среда,<br>
+Где живем мы совсем по-другому?<br>
+<br>
+С тенью тень там так мягко слилась,<br>
+Там бывает такая минута,<br>
+Что лучами незримыми глаз<br>
+Мы уходим друг в друга как будто.<br>
+<br>
+И движеньем спугнуть этот миг<br>
+Мы боимся, иль словом нарушить,<br>
+Точно ухом кто возле приник,<br>
+Заставляя далекое слушать.<br>
+<br>
+Но едва запылает свеча,<br>
+Чуткий мир уступает без боя<br>,
+Лишь из глаз по наклонам луча<br>
+Тени в пламя сбегут голубое.<br></div>
+<img id='s2' src="свеча1.gif" />
+<br>
+
+</form>
+</body>

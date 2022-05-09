@@ -1,0 +1,93 @@
+<html>
+<head>
+<style>
+h1 {color:red;text-align:center;}
+body {background-color:PaleGreen; font-weight:bold;}
+input {font-weight:bold;}
+</style>
+<script>
+function bio()
+{
+// переменная р объект текстовое поле с именем t
+var p=document.getElementById('fam');
+var fam=p.value;
+var p=document.getElementById('name');
+var name=p.value;
+var p=document.getElementById('sfam');
+var sfam=p.value;
+var p=document.getElementById('bd');
+var bd=p.value;
+var p=document.getElementById('place');
+var pl = p.value;
+var p=document.getElementById('l');
+var l=p.value;
+var p=document.getElementById('h');
+var h=p.value;
+// переменная win экземпляр объекта window
+// создается пустое окно размерами 400 на 500,
+var win=window.open("","","width=400,height=500");
+// открываем запись в это окно - объект win
+win.document.open();
+// формирование строки str
+// содержимое в заголовок передается из поля формы, переменная r
+var str = "Я, "+fam+" "+name+" "+sfam+" родился в " +bd+ " году в городе "+pl+"<hr>Больше всего я люблю "+l+" и очень не люблю "+ h+ ". Было бы замечательно, всю жизнь только "
++l+" ,но к сожалению приходится иногда и " + h+ ".<hr></P>";
+// вывод строки в документ окна win
+win.document.write("<h1>О себе</h1><hr><P>");
+win.document.write(str);
+// формирование и вывод кнопки закрытия
+str ='<input type="button" value="закрыть"'
++'onClick="window.close();">';
+win.document.write(str);
+// закрываем вывод в документ объекта win
+win.document.close();
+}
+</script>
+</head>
+<body>
+<h1>Приветствие</h1>
+<hr>
+<form>
+<table>
+<tr><td>
+Фамилия:</td><td>
+<input type=text value="Горбунков" name="fam"
+id='fam' size="30"></td>
+
+<tr><td>
+Имя:</td><td>
+<input type=text value="Семен" name="name"
+id='name' size="30"></td>
+
+</tr>
+<tr><td>
+Отчество:</td><td>
+<input type=text value="Семенович" name="sfam"
+id='sfam' size="30"></td>
+</tr>
+<tr><td>
+Год рождения:</td><td>
+<input type=text value="1990" name="bd"
+id='bd' size="30"></td>
+</tr>
+<tr><td>
+Место рождения:</td><td>
+<input type=text value="Одесса" name="place"
+id='place' size="30"></td>
+</tr>
+<tr><td>
+Любимое занятие:</td><td>
+<input type=text value="читать" name="l"
+id='l' size="30"></td>
+</tr>
+<tr><td>
+Нелюбимое занятие:</td><td>
+<input type=text value="мыть посуду" name="h"
+id='h' size="30"></td>
+</tr>
+</table>
+<input type=button value="Сформировать биографию" OnClick="bio()">
+<hr>
+</form>
+</body>
+</html>

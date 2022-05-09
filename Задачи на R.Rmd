@@ -1,0 +1,609 @@
+---
+title: "Задачи на R по статистике"
+author: "Shigatau"
+date: "10 08 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Подключение датасетов и пакетов
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(psych)
+library(gvlma)
+data("mtcars")
+data('AirPassengers')
+data('airquality')
+data('iris')
+data('diamonds')
+data('ToothGrowth')
+```
+
+## Переменные
+
+Конкатенация векторов:
+
+```{r}
+a <- 1:5000
+b <- 7000:10000
+the_best_vector <- c(a, b)
+the_best_vector
+```
+
+В векторе  my_vector отберите только те наблюдения, которые отклоняются от среднего меньше чем на одно стандартное отклонение. Сохраните эти наблюдения в новую переменную my_vector_2. 
+
+```{r, eval=FALSE}
+my_vector_2 <- my_vector[my_vector<mean(my_vector)+sd(my_vector) & my_vector>mean(my_vector)-sd(my_vector)]
+```
+```{r, eval=FALSE}
+#еще вариант но поумнее
+my_vector_2 <- my_vector[abs(my_vector - mean(my_vector)) < sd(my_vector)]
+```
+
+## Работа с датафреймами
+
+В датафрэйме mtcars создайте новую колонку (переменную) под названием even_gear, в которой будут единицы, если значение переменной (gear) четное, и нули если количество нечетное.
+
+```{r}
+data(mtcars)
+mtcars$even_gear <- as.numeric(mtcars$gear %% 2 == 0)
+```
+```{r}
+#еще вариант
+mtcars$even_gear[mtcars$gear%%2 == 0] <- 1
+mtcars$even_gear[mtcars$gear%%2 == 1] <- 0
+```
+
+Теперь ваша задача создать переменную - вектор mpg_4 и сохранить в нее значения расхода топлива (mpg) для машин с четырьмя цилиндрами (cyl).
+
+```{r}
+mpg_4 <- mtcars$mpg[mtcars$cyl==4]
+```
+```{r}
+#или еще вариант
+mpg_4 <- mtcars[mtcars$cyl == 4, "mpg"]
+```
+
+Ваша задача создать новый dataframe под названием mini_mtcars, в котором будут сохранены только третья, седьмая, десятая, двенадцатая и последняя строчка датафрейма mtcars.
+
+```{r}
+mini_mtcars <- mtcars[c(3,7,10,12,nrow(mtcars)),]
+```
+
+Создайте новую числовую переменную  new_var в данных mtcars, которая содержит единицы в строчках, если в машине не меньше четырёх карбюраторов (переменная "carb") или больше шести цилиндров (переменная "cyl"). В строчках, в которых условие не выполняется, должны стоять нули.
+
+```{r}
+mtcars$new_var <- ifelse(mtcars$carb>=4 | mtcars$cyl>6, 1, 0)
+```
+
+И так ваша задача создать переменную good_months и сохранить в нее число пассажиров только в тех месяцах, в которых это число больше, чем показатель в предыдущем месяце.
+
+```{r}
+good_months <- AirPassengers[c(FALSE, AirPassengers[2:144] > AirPassengers[1:143])]
+```
+
+
+Для встроенных в R данных AirPassengers рассчитайте скользящее среднее с интервалом сглаживания равным 10. Напечатайте получившийся результат (первым значением в выводе должно быть среднее для элементов 1:10, во втором значении - среднее для элементов 2:11 и т.д., в последнем  - среднее для элементов 135 :144)
+
+```{r}
+moving_average <- c()
+for (i in 10:144){
+  moving_average <- c(moving_average, mean(AirPassengers[(i-9):i]))
+}
+```
+```{r}
+n <- 10    
+d <- AirPassengers    
+cx <- c(0, cumsum(d))    
+moving_average <- (cx[(n + 1):length(cx)] - cx[1:(length(cx) - n)]) / n
+```
+
+При помощи функции aggregate рассчитайте стандартное отклонение переменной hp (лошадиные силы) и переменной disp (вместимости двигателя)  у машин с автоматической и ручной коробкой передач. 
+
+Полученные результаты (результаты выполнения функции aggregate) сохраните в переменную descriptions_stat.
+```{r}
+descriptions_stat <- aggregate(x=mtcars[,c("hp","disp")], by=list(mtcars$am), FUN=sd)
+```
+```{r}
+descriptions_stat <- aggregate(cbind(hp,disp) ~ am, mtcars, sd)
+```
+
+Воспользуемся встроенными данными airquality. В новую переменную сохраните subset исходных данных, оставив наблюдения только для месяцев 7, 8 и 9.
+
+При помощи функции aggregate рассчитайте количество непропущенных наблюдений по переменной Ozone в 7, 8 и 9 месяце. Для определения количества наблюдений используйте функцию length().
+```{r}
+df <- airquality[airquality$Month %in% c(7,8,9),]
+result <- aggregate(Ozone ~ Month,df,length)
+```
+
+Примените функцию describeBy к количественным переменным данных airquality, группируя наблюдения по переменной Month. Чему равен коэффициент асимметрии (skew) переменной Wind в восьмом месяце?
+```{r}
+describeBy(airquality, airquality$Month == 8)[['TRUE']]['Wind','skew']
+```
+
+В данных iris расположите по убыванию значения медиан количественных переменных в группе virginica
+```{r}
+sort(describeBy(iris[1:4], iris$Species=='virginica')$'TRUE'['median']$median)
+```
+
+В переменной my_vector сохранен вектор с пропущенными значениями. Вам нужно создать новый вектор fixed_vector, в котором все пропущенные значения вектора my_vector будут заменены на среднее значение по имеющимся наблюдениям.
+```{r, eval=FALSE}
+fixed_vector <- replace(my_vector, is.na(my_vector), mean(my_vector,na.rm = TRUE))
+fixed_vector <- my_vector
+fixed_vector[is.na(fixed_vector)] <- mean(fixed_vector, na.rm=TRUE)
+```
+
+Нужно построить scatterplot с помощью ggplot из ggplot2, по оси x которого будет mpg, по оси y - disp, а цветом отобразить переменную (hp).
+```{r}
+plot1 <- ggplot(mtcars, aes(x=mpg, y=disp,col=hp))+
+  geom_point()
+```
+
+Постройте столбчатую диаграмму распределения цвета глаз по цвету волос только у женщин из
+таблицы HairEyeColor. По оси X должен идти цвет волос, цвет столбиков должен отражать цвет глаз. По оси Y - количество наблюдений.
+```{r, eval=FALSE}
+my_data <- as.data.frame(HairEyeColor)
+obj <- ggplot(data = my_data[my_data$Sex=='Female',], aes(x = Hair, y = Freq, fill=Eye)) + 
+  geom_bar(stat="identity", position = position_dodge()) + 
+  scale_fill_manual(values=c("Brown", "Blue", "Darkgrey", "Darkgreen"))
+```
+
+Воспользуемся данными diamonds из библиотеки ggplot2. При помощи критерия Хи - квадрат проверьте гипотезу о взаимосвязи качества огранки бриллианта (сut) и его цвета (color). В переменную main_stat сохраните значение статистики критерия Хи - квадрат. Обратите внимание, main_stat должен быть вектором из одного элемента, а не списком (листом).
+```{r}
+main_stat <- chisq.test(table(diamonds[,c("cut","color")]))$statistic
+```
+
+Опять воспользуемся данными diamonds из библиотеки ggplot2. При помощи критерия Хи - квадрат проверьте гипотезу о взаимосвязи цены (price) и каратов (carat) бриллиантов. Для этого сначала нужно перевести эти количественные переменные в формат пригодный для Хи - квадрат. Создайте две новые переменные в данных diamonds:
+
+factor_price - где будет 1, если значение цены больше либо равно чем среднее, и 0, если значение цены ниже среднего цены по выборке.
+
+factor_carat - где будет 1, если число карат больше либо равно чем среднее,  и 0, если ниже среднего числа карат по выборке.
+```{r}
+diamonds$factor_price <- ifelse(diamonds$price>=mean(diamonds$price),1,0)
+diamonds$factor_carat <- ifelse(diamonds$carat>=mean(diamonds$carat),1,0)
+
+main_stat <- chisq.test(diamonds$factor_price,diamonds$factor_carat)$statistic
+```
+```{r}
+main_stat <- chisq.test(table(
+    diamonds$price >= mean(diamonds$price),
+    diamonds$carat >= mean(diamonds$carat)
+    ))$statistic
+```
+
+Воспользуемся еще одним встроенным набором данных в R  - ToothGrowth. Данные позволяют исследовать рост зубов у морских свинок в зависимости от дозировки витамина C и типа потребляемых продуктов.
+
+Сравните среднее значение длины зубов свинок, которые потребляли апельсиновый сок (OJ) с дозировкой 0.5 миллиграмм, со средним значением длины зубов свинок, которые потребляли аскорбиновую кислоту (VC) с дозировкой 2 миллиграмма. 
+```{r}
+df <- ToothGrowth
+t_stat <- t.test(df$len[df$supp=='OJ' & df$dose==0.5], df$len[df$supp=='VC' & df$dose==2])$statistic
+```
+```{r}
+correct_data <- subset(ToothGrowth, supp=='OJ' & dose==0.5 | supp=='VC' & dose==2)    
+t_stat <- t.test(len ~ supp, correct_data)$statistic
+```
+В этом задании нужно проверить гипотезу о равенстве средних двух выборок, загрузив набор данных (нажмите начать решать задание) и выполнив все необходимые операции на вашем компьютере.
+```{r}
+dz <- read.table("dataset_11504_15.txt")
+check_ds <- function(x){
+  if(bartlett.test(x$V1, x$V2)$p.value < 0.05) {
+    print("We do Wilcox test")
+    wilcox.test(V1 ~ V2, x)$p.value
+  } else {
+    print("We do T test")
+    t.test(V1 ~ V2, x, var.equal = T)$p.value
+  }
+}
+
+check_ds(dz)
+```
+
+В этой задаче вам дан набор данных, в котором представлена информация о температуре нескольких пациентов, которые лечатся разными таблетками и у разных врачей.
+
+Проведите однофакторный дисперсионный анализ с повторными измерениями: влияние типа таблетки (pill) на температуру (temperature) с учётом испытуемого (patient). Каково p-value для влияния типа таблеток на температуру?
+```{r}
+df <- read.csv(url("https://stepic.org/media/attachments/lesson/11505/Pillulkin.csv"))
+fit <- aov(temperature~pill+Error(as.factor(patient)/pill), df)
+summary(fit)[[2]][[1]][1,5]
+```
+
+Вспомните графики из лекций и дополните шаблон графика в поле для ответа так (не добавляя еще один geom) , чтобы объединить линиями точки, принадлежащие разным уровням фактора supp.
+```{r}
+obj <- ggplot(ToothGrowth, aes(x = as.factor(dose), y = len, col = supp, group=supp))+
+  stat_summary(fun.data = mean_cl_boot, geom = 'errorbar', width = 0.1, position = position_dodge(0.2))+
+  stat_summary(fun.data = mean_cl_boot, geom = 'point', size = 3, position = position_dodge(0.2))+
+  stat_summary(fun.data = mean_cl_boot, geom = 'line', size=1, position = position_dodge(0.2))
+```
+
+Напишите функцию, которая выводит номера позиций пропущенных наблюдений в векторе.
+
+На вход функция получает числовой вектор с пропущенными значениями. Функция возвращает новый вектор с номерами позиций пропущенных значений.
+```{r}
+NA.position <- function(x){
+    ex <- 1:length(x)
+  return(ex[is.na(x)])  
+}
+```
+```{r}
+NA.position <- function(x){    
+which(is.na(x))}
+```
+```{r}
+NA.position <- function(x){
+  res <- c()
+  for (i in 1:length(x)){
+    if (is.na(x[i])){
+      res <- c(res, i)
+    }
+  }
+  return(res)
+}
+```
+
+Напишите функцию NA.counter для подсчета пропущенных значений в векторе.
+```{r}
+NA.counter <- function(x){
+  return(length(which(is.na(x))))
+  }
+```
+```{r}
+NA.counter <- function(x){    
+return(sum(is.na(x)))}
+```
+
+Напишите функцию filtered.sum, которая на вход получает вектор с пропущенными, положительными и отрицательными значениями и возвращает сумму положительных элементов вектора.
+```{r}
+filtered.sum <- function(x){
+  return(sum(x[x>0], na.rm = T))
+  
+}
+```
+
+Напишите функцию outliers.rm, которая находит и удаляет выбросы.
+```{r}
+outliers.rm <- function(x){
+  q <- quantile(x, probs = c(0.25, 0.75))
+  res <- x[x>=(q[1]-1.5*IQR(x))&x<=(q[2]+1.5*IQR(x))]
+  return(res)
+}
+```
+
+Напишите функцию corr.calc, которая на вход получает data.frame с двумя количественными переменными, рассчитывает коэффициент корреляции Пирсона и возвращает вектор из двух значений: коэффициент корреляции и p - уровень значимости.
+```{r}
+corr.calc <- function(x){
+  res <- cor.test(x[,1],x[,2])
+  return(c(res$estimate,res$p.value))
+}
+```
+
+Напишите функцию filtered.cor которая на вход получает data.frame с  произвольным количеством переменных (как количественными, так и любых других типов), рассчитывает коэффициенты корреляции Пирсона между всеми парами количественных переменных и возвращает наибольшее по модулю значение коэффициента корреляции.
+```{r}
+filtered.cor <- function(x){
+  temp <- x[,sapply(x, is.numeric)]
+  fit <- corr.test(temp)
+  diag(fit$r) <- 0
+  return(fit$r[which.max(abs(fit$r))])
+}
+```
+
+Напишите функцию smart_cor, которая получает на вход dataframe с двумя количественными переменными. Проверьте с помощью теста Шапиро-Уилка, что данные в обеих переменных принадлежат нормальному распределению.
+
+Если хотя бы в одном векторе распределение переменной отличается от нормального (p - value меньше 0.05), то функция должна возвращать коэффициент корреляции Спирмена. (Числовой вектор из одного элемента).
+```{r}
+smart_cor <- function(x){
+  if (shapiro.test(x[,1])$p<0.05|shapiro.test(x[,2])$p<0.05){
+    return(cor.test(x[,1],x[,2],method='spearman')$estimate)
+  } else {
+    return(cor.test(x[,1],x[,2])$estimate)
+  }
+  
+}
+```
+```{r}
+smart_cor <- function(x){
+  cor.test(x[[1]], x[[2]], method = 
+      ifelse(any(apply(x, 2, function (y) shapiro.test(y)$p) < 0.05), 
+             "spearman", "pearson"))$estimate
+}
+```
+
+Воспользуемся уже знакомыми данными diamonds из библиотеки ggplot2. Только для бриллиантов класса Ideal (переменная cut) c числом карат равным 0.46 (переменная carat) постройте линейную регрессию, где в качестве зависимой переменной выступает price, в качестве предиктора - переменная  depth. Сохраните коэффициенты регрессии в переменную fit_coef.
+```{r}
+fit <- lm(price~depth, diamonds[diamonds$cut=='Ideal' & diamonds$carat==0.46,])
+fit_coef <- fit$coefficients
+```
+```{r}
+fit_coef <- lm(price ~ depth, diamonds, (diamonds$cut =='Ideal') & (diamonds$carat == 0.46))$coef
+```
+
+Напишите функцию regr.calc, которая на вход получает dataframe c двумя переменными.
+
+Если две переменные значимо коррелируют (p - уровень значимости для коэффициента корреляции Пирсона меньше 0.05), то функция строит регрессионную модель, где первая переменная - зависимая, вторая - независимая. Затем создает в dataframe новую переменную с назанием fit, где сохраняет предсказанные моделью значения зависимой переменной. В результате функция должна возвращать исходный dataframe с добавленной новой переменной fit.
+
+Если две переменные значимо не коррелируют, то функция возвращает строчку "There is no sense in prediction"
+```{r}
+regr.calc <- function(x){
+  if (psych::corr.test(x)$ci$p >= 0.05) 
+    return("There is no sense in prediction")
+  x$fit <- lm(x[[1]] ~ x[[2]], x)$fitted.values
+  return(x)
+}
+```
+
+Напишите функцию fill_na, которая принимает на вход данные с тремя переменными:
+
+x_1  -  числовой вектор
+
+x_2 - числовой вектор
+
+y - числовой вектор с пропущенными значениями.
+
+Теперь — самое интересное. На первом этапе, используя только наблюдения, в которых нет пропущенных значений, мы построим регрессионную модель (без взаимодействий), где  y — зависимая переменная, x_1 и x_2 — независимые переменные. Затем, используя построенную модель, мы заполним пропущенные значения предсказаниями модели.
+
+Функция должна возвращать dataframe c новой переменной  y_full. Сохраните в нее переменную y, в которой пропущенные значения заполнены предсказанными значениями построенной модели.
+```{r}
+fill_na <- function(x){
+  fit <- lm(y~x_1+x_2, x, na.action=na.omit)
+  x$y_full <- x$y
+  x$y_full[is.na(x$y_full)] <- predict(fit, subset(x, is.na(x$y))[,c(1,2)])
+  return(x)
+}
+```
+```{r}
+fill_na <- function(my_df){    
+	fit <- lm(y ~ x_1+x_2, my_df)    
+	my_df$y_full = ifelse(is.na(my_df$y), predict(fit, my_df), my_df$y)    
+	return(my_df)}
+```
+В переменной df сохранен subset данных mtcars только с переменными "wt", "mpg", "disp", "drat", "hp". Воспользуйтесь множественным регрессионным анализом, чтобы предсказать вес машины (переменная "wt"). Выберите такую комбинацию независимых переменных (из "mpg", "disp", "drat", "hp"), чтобы значение R^2 adjusted было наибольшим. Взаимодействия факторов учитывать не надо. 
+
+```{r}
+df1 <- mtcars[,c("wt", "mpg", "disp", "drat", "hp")]
+fit_full <- lm(wt ~ ., data = df1)
+optimal_fit <-  step(fit_full, direction = 'backward')
+opt_summary <- summary(optimal_fit)
+attr(as.formula(opt_summary), "term.labels")
+```
+
+Итак, задача! C помощью функции step найдите оптимальную модель для предсказания rating в датасете attitude. Model_full и model_null уже созданы. Сохраните команду с функцией step в переменную ideal_model.
+```{r}
+model_full <- lm(rating ~ ., data = attitude) 
+model_null <- lm(rating ~ 1, data = attitude)
+ideal_model <- step(lm(rating~., attitude), scope = list(lower = model_null, upper = model_full), direction = 'backward')
+```
+
+Функция scale() позволяет совершить стандартизацию вектора, то есть делает его среднее значение равным нулю, а стандартное отклонение - единице (Z-преобразование).
+
+Стандартизованный коэффициент регрессии (\betaβ) можно получить, если предикторы и зависимая переменная стандартизованы.
+
+Напишите функцию, которая на вход получает dataframe с двумя количественными переменными, а возвращает стандартизованные коэффициенты для регрессионной модели, в которой первая переменная датафрейма выступает в качестве зависимой, а вторая в качестве независимой.
+```{r}
+beta.coef <- function(x){
+  fit <- lm(scale(x[,1])~scale(x[,2]), x)
+  return(fit$coefficients)
+}
+```
+
+Напишите функцию normality.test, которая получает на вход dataframe с количественными переменными, проверяет распределения каждой переменной на нормальность с помощью функции shapiro.test. Функция должна возвращать вектор с значениями p - value, полученного в результате проверки на нормальность каждой переменной. Названия элементов вектора должны совпадать с названиями переменных. 
+```{r}
+normality.test <- function(x){
+  res <- vector(length = length(x))
+  names(res) <- names(x)
+  for (i in 1:length(x)){
+    res[i] <- shapiro.test(x[[i]])$p.value
+  }
+  return(res)
+}
+```
+
+Загрузите себе прикреплённый к этому степу датасет и постройте регрессию, предсказывающую DV по IV. Установите библиотеку gvlma и проверьте, удовлетворяется ли в этой модели требование гомоскедастичности. Введите в поле ответа p-значение для теста гетероскедастичности.
+```{r}
+df <- read.csv(url('https://stepic.org/media/attachments/lesson/12088/homosc.csv'))
+res <- gvlma(DV ~ IV, data = df)
+summary(res)[['p-value']][5]
+```
+
+Напишите функцию resid.norm, которая тестирует распределение остатков от модели на нормальность при помощи функции shapiro.test и создает гистограмму при помощи функции ggplot() с красной заливкой "red", если распределение остатков значимо отличается от нормального (p < 0.05), и с зелёной заливкой "green" - если распределение остатков значимо не отличается от нормального.
+```{r}
+resid.norm  <- function(fit){
+  plot <- ggplot(as.data.frame(fit$model), aes(x=fit$residuals))+
+    geom_histogram(fill=ifelse(shapiro.test(fit$residuals)$p.value<0.05, 'red','green'))
+  return(plot)
+}
+fit <- lm(mpg ~ disp, mtcars)
+my_plot <- resid.norm(fit)
+my_plot
+```
+
+Ещё одной проблемой регрессионных моделей может стать мультиколлинеарность - ситуация, когда предикторы очень сильно коррелируют между собой. Иногда корреляция между двумя предикторами может достигать 1, например, когда два предиктора - это одна и та же переменная, измеренная в разных шкалах (x1 - рост в метрах, x2 - рост в сантиметрах) 
+Напишите функцию high.corr, которая принимает на вход датасет с произвольным числом количественных переменных и возвращает вектор с именами двух переменных с максимальным абсолютным значением коэффициента корреляции .
+```{r}
+high.corr <- function(x){
+  temp <- cor(x)  
+  diag(temp) <- 0
+  temp <- round(temp, 3) #нужно из за стандарта IEEE floating point arithmetic
+  return(c(rownames(temp)[which(abs(temp)==max(abs(temp)), arr.ind = T)[1]],
+           colnames(temp)[which(abs(temp)==max(abs(temp)), arr.ind = T)[2]]))
+}
+```
+
+Дополните предложенный в задании код, чтобы построить следующий график по данным ToothGrowth.
+Изобразите различия длины зубов морских свинок в различных условиях дозировки и типа потребляемого продукта.
+```{r}
+obj <- ggplot(data = ToothGrowth, aes(x=supp, y=len, fill=as.factor(dose)))+
+  geom_boxplot()
+```
+
+По имеющимся данным в переменной admit постройте логистическую регрессионную модель, предсказывающую результат поступления по престижности учебного заведения среднего образования (переменная rank, 1 — наиболее престижное, 4 — наименее престижное) и результатов GPA (переменная gpa) с учётом их взаимодействия. Примените эту модель к той части данных, где результат поступления неизвестен.
+
+Ответом в задаче будет предсказанное моделью число поступивших из тех, для кого результат поступления был неизвестен. Считаем человека поступившим, когда вероятность его поступления не меньше 0.4.
+```{r}
+df <- read.csv("https://stepic.org/media/attachments/lesson/11478/data.csv")
+fit <- glm(admit~gpa*rank, df[!(is.na(df$admit)),], family = 'binomial')
+pred <- predict(fit, newdata=df[is.na(df$admit),], type = 'response')
+res <- ifelse(pred<0.4, 0, 1)
+print(sum(res==1))
+```
+
+##Функции семейства apply
+
+Давайте завершим и слегка модифицируем задачу из предыдущей лекции. Напишите функцию get_negative_values, которая получает на вход dataframe произвольного размера. Функция должна для каждой переменной в данных проверять, есть ли в ней отрицательные значения. Если в переменной отрицательных значений нет, то эта переменная нас не интересует, для всех переменных, в которых есть отрицательные значения мы сохраним их в виде списка или матрицы, если число элементов будет одинаковым в каждой переменной
+```{r}
+get_negative_values <- function(test_data){    
+negative_col <- apply(test_data, 2, function(x) any(x[!is.na(x)] < 0))    
+return(apply(test_data[negative_col], 2, function(x) x[!is.na(x) & x <0]))}
+test_data <- as.data.frame(list(V1 = c(NA, -0.5, -0.7, -8), V2 = c(-0.3, NA, -2, -1.2), V3 = c(1, 2, 3, NA)))
+get_negative_values(test_data)
+```
+
+Напишите функцию na_rm которая заменяет все пропущенные значения в столбцах dataframe на соответствующее среднее значение. То есть все NA в первом столбце заменяются на среднее значение первого столбца (рассчитанного без учета NA). Все NA второго столбца заменяются на среднее значение второго столбца и т.д.  
+
+Функция na_rm на вход получает dataframe произвольной размерности, состоящий из количественных переменных. Функция должна возвращать  dataframe с замененными NA. Ни порядок столбцов, ни порядок строк в dataframe изменять не нужно.
+```{r}
+na_rm  <- function(x){
+  res <- apply(x, 2, function(x) replace(x, is.na(x), mean(x, na.rm = T)))
+  return(as.data.frame(res))
+}
+test_data <- as.data.frame(list(V1 = c(NA, NA, NA, NA, 13, 12, 9, 10, 8, 9, 11, 11, 10, 12, 9),
+                                V2 = c(NA, 12, 8, NA, 11, 11, 9, 8, 8, 10, 10, 11, 10, 10, 10),
+                                V3 = c(NA, 5, NA, 13, 12, 11, 11, 14, 8, 12, 8, 8, 10, 10, 8), 
+                                V4 = c(10, 10, 10, 10, 13, 10, 11, 7, 12, 10, 7, 10, 13, 10, 9)))
+na_rm(test_data)
+```
+
+Напишите функцию positive_sum, которая получает на вход dataframe с произвольным количеством числовых переменных. Основная задача функции - найти сумму положительных значений в каждой переменной и сохранить их в список.
+```{r}
+positive_sum <-  function(test_data){
+  res <- lapply(test_data, function(x) sum(x[x>0], na.rm = T))
+  return(res)
+}
+d <- data.frame(X1 = c(-1, -2, 0), X2 = c(10, 4, NA), X3 = c(-4, NA, NA))
+positive_sum(d)
+```
+
+Обратите внимание, что само название гена спрятано внутри строки и указано после символа @. Напишите функцию my_names, которая получает на вход  датафрейм и вектор с именами тех генов, для которых мы хотим отобрать наблюдения уровня экспрессии.
+```{r}
+my_names <- function (dataset, names){
+  matched_val <- sapply(names, function(x) grepl(x, dataset[['name']]))
+  res <- apply(matched_val, 2, function(x) dataset[x, ])
+  return(dataset[c(sort(sapply(res, rownames))),])
+}
+my_names <- function (dataset, names){    
+dataset[as.numeric(lapply(names, function(x) which(grepl(x, dataset$name)))),]}
+test_data <- as.data.frame(list(
+  name = c("p4@HPS1", "p7@HPS2", "p4@HPS3", "p7@HPS4", "p7@HPS5", "p9@HPS6", "p11@HPS7", "p10@HPS8", "p15@HPS9"), 
+                                expression = c(118.84, 90.04, 106.6, 104.99, 93.2, 66.84, 90.02, 108.03, 111.83)))
+names = c("HPS5", "HPS6", "HPS9", "HPS2", "HPS3", "HPS7", "HPS4", "HPS8")
+my_names(test_data, names)
+```
+
+Напишите функцию find_outliers, которая получает на вход dataframe с одной количественной переменной и произвольным числом факторных переменных. Факторные переменные разбивают все наши наблюдения на определенное число групп. Например, если мы посмотрим на данные mtcars и возьмем в качестве группирующих переменных: am - две градации и cyl три градации, то получим 6 групп наблюдений на пересечении градаций этих переменных. 
+```{r}
+find_outliers <- function(data) {
+    num_cols <- sapply(data, is.numeric)
+    splitted <- split(data[, num_cols], data[!num_cols])
+    outliers <- lapply(splitted, function(x) as.numeric(abs(x - mean(x)) > sd(x) * 2))
+    data$is_outlier <- unsplit(outliers, data[!num_cols])
+    data
+}
+ToothGrowth$dose <- factor(ToothGrowth$dose)
+find_outliers(ToothGrowth)
+```
+
+Напишите функцию smart_lm, которая получает на вход data.frame с произвольным числом количественных переменных. Первая колонка в данных - это зависимая переменная, все остальные - предикторы. На первом этапе вы должны отобрать предикторы для модели.
+
+Функция возвращает в виде вектора коэффициенты линейной регрессии построенной только для отобранных предикторов (условие нормальности распределения). Если таких предикторов в данных не оказалось, то функция возвращает предупреждение "There are no normal variables in the data".
+```{r}
+smart_lm <- function(x){
+  norm_data <- apply(x, 2, function(x) shapiro.test(x)$p.value>0.05)
+  if (sum(as.numeric(norm_data[-1]))!=0){
+    return(lm(x[[1]]~ ., x[,norm_data][-1])$coefficients)
+  } else {
+    return("There are no normal variables in the data")
+    }
+}
+smart_lm(swiss)
+```
+
+Ваша функция должна применять одновыборочный t - test к каждой числовой переменной в данных, и сравнивать среднее значение этой переменной с указанным значением среднего в генеральной совокупности (второй аргумент функции).
+
+Функция должна возвращать список, где каждый элемент это вектор, состоящий из t - значения, числа степеней свобод (df) и значения p - value.
+```{r}
+one_sample_t <- function(data, mean) {
+    lapply(data[sapply(data, is.numeric)],
+           function(x) unlist(t.test(x, mu = mean)[c("statistic", "parameter", "p.value")]))
+}
+```
+
+Итак, ваша задача, написать функцию get_p_value, которая получает на вход список (назовем его главным списком), каждый элемент этого списка тоже список - результат выполнения функции shapiro.test (смотри пример normality_tests). Ваша задача из каждого элемента главного списка вытащить только p - value. В итоге функция возвращает список где каждый элемент - одно значение - p - value
+```{r}
+get_p_value <- function(test_list){
+  return(lapply(test_list, function(x) unlist(x$p.value)))
+}
+get_p_value = function(test_data){    
+sapply(test_data, '[', 2)}
+normality_tests <- lapply(iris[, 1:4], shapiro.test)
+get_p_value(normality_tests)
+```
+
+##Работа с dplyr
+В переменную d сохраните только нeчетные строчки исходных данных diamonds.
+```{r}
+d <- slice(diamonds, seq(1, length(diamonds[[1]]), by=2))
+```
+
+Потренируемся использовать изученные функции. Из данных mtcars отберите только четыре переменные: mpg, hp, am, vs. Оставьте только те наблюдения, для которых значения mpg > 14 и hp > 100. Отсортируйте получившиеся данные по убыванию переменной mpg и возьмите только первые 10 строчек. Переменную mpg переименуйте в Miles per gallon, а переменную hp в  Gross horsepower (обратите внимание, dplyr позволит нам создать пременные с пробелами в названии). Получившийся dataframe сохраните в переменную my_df.
+```{r}
+my_df <- mtcars %>% 
+  select(mpg, hp, am, vs) %>% 
+  filter(mpg>14, hp>100) %>% 
+  arrange(desc(mpg)) %>% 
+  slice(1:10) %>% 
+  rename('Miles per gallon'=mpg, 'Gross horsepower'=hp)
+```
+
+Ваша задача написать функцию, которая получает на вход dataframe  с произвольным числом переменных разных типов. На первом этапе функция должна выполнить предобработку числовых переменных. Т.к. значение логарифма мы можем рассчитать только для положительных чисел. Для этого сделаем центрирование всех переменных (Rescaling), только еще добавим единичку, чтобы у нас не осталось нулей
+```{r}
+log_transform <- function(df){
+    df %>% mutate_if(is.numeric, funs(log(scales::rescale(.) + 1)))
+}
+log_transform <- function(test_data){      
+rescaling <- function(x){      
+log((x - min(x)) / (max(x) - min(x)) + 1)}      
+num_var <- sapply(test_data, is.numeric)      
+test_data[num_var] <- mutate_each(test_data[num_var], funs(rescaling))      
+return(test_data)}
+test_data <- as.data.frame(list(V1 = c(0.1, 1, 0.4, -0.1, -0.5), V2 = c("B", "B", "A", "B", "A"), V3 = c(-1.2, 0.6, 1, 0.6, -0.3), V4 = c(0.3, -1, -1.7, 0.3, -0.2)))
+log_transform(test_data)
+```
+
+И так, ваша задача будет написать функцию descriptive_stats, которая рассчитывает основные описательные статистики в каждой группе наблюдений для описанного выше примера. Функция получает на вход dataframe с тремя переменными salary - значение заработной платы, gender - фактор с двумя градациями (male, female), country - фактор с двумя градациями (England, France).
+
+Функция должна возвращать dataframe с описательными статистиками и количеством NA, рассчитанными в каждой группе: количеств наблюдений, среднее значение, стандартное отклонение, медиана, первый квартиль, третий квартиль, число пропущенных значений.
+```{r}
+descriptive_stats <- function (dataset){
+  group_by(dataset, gender, country) %>% 
+    summarise(n=n(), mean=mean(salary, na.rm=T), sd=sd(salary, na.rm=T), median=median(salary, na.rm=T),
+              first_quartile=quantile(salary, 0.25, na.rm=T), third_quartile=quantile(salary, 0.75, na.rm=T), na_values=sum(is.na(salary)))
+  
+  
+}
+test_data <- read.csv("https://stepic.org/media/attachments/course/724/salary.csv")
+descriptive_stats(test_data)
+```
+
+Напишите функцию, to_factors, которая получает на вход dataframe  с произвольным числом количественных переменных и вектор с номерами колонок, которые нужно перевести в фактор.
+
+Для перевода числовых колонок в фактор будем использовать следующий принцип, если наблюдение больше среднего всей переменной то 1, иначе 0.
+```{r}
+to_factors <- function(test_data, factors){
+  mutate_at(test_data, vars(factors), function(x) as.factor(ifelse(x>mean(x), 1, 0)))
+}
+
+to_factors(mtcars[1:4], factors = c(1, 3))
+```
+

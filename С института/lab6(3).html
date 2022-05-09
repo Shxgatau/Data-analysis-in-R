@@ -1,0 +1,49 @@
+<head>
+<style>
+#im1 {position:absolute;left:0;top:0;}
+#im2 {position:absolute;left:0;top:0;}
+</style>
+</head>
+<body>
+<img src="p5_0.jpeg" id="im1" width="50%" height="400px" />
+<img src="4.gif" id="im2" width="50px" height="50px"/>
+<script type="text/JavaScript">
+function f()
+{
+// сдвиг рисунка на 10
+x=x+s;
+// изменяем свойство left 2-го рисунка
+if(y<y1){
+r2.style.left=x;
+// если он не дошел до края 1-го рисунка
+// то вызываем каждые 1000 мили сек эту же функцию
+if (x<x1-x2 ) {setTimeout("f()",200)} else {s=-10;y=y+y2;console.log(y);console.log(x+"cs");if(y<y1){r2.style.top=y;};setTimeout("g()",200)};
+
+}
+}
+function g()
+{
+x=x+s;
+if(y<y1){
+r2.style.left=x;
+if (x>0 ) {setTimeout("g()",200)} else  {s=10;y=y+y2;console.log(y);console.log(x+"cs");if(y<y1){r2.style.top=y;};setTimeout("f()",200)};
+
+}
+}
+// начало скрипта
+x=0;
+y=0;
+s=10;
+r1=document.getElementById('im1');
+r2=document.getElementById('im2');
+x1=r1.width //ширина фона
+console.log(x1);
+y1=r1.height;
+console.log(y1);
+y2=r2.height;
+console.log(y2);
+x2=r2.width //ширина птички
+console.log(x2);
+f();
+</script>
+</body>

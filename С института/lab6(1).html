@@ -1,0 +1,36 @@
+<head>
+<style>
+img {border: 50px inset grey;}
+</style>
+<script>
+i=0;
+function f()
+{
+// объект буква Z
+r1=document.getElementById('s')
+// объект кнопка
+r2=document.getElementById('e2')
+if (i==0)
+{
+// у объекта r1 есть свойство style. Это тоже объект
+// меняем у объекта style свойство color
+r1.style.borderColor='blue';
+// меняем у объекта r2 свойство value
+r2.value='изменить рамку на серую';
+i=1;}
+else
+{
+r1.style.borderColor='grey'; r2.value='изменить рамку на синюю';
+i=0
+}
+}
+</script>
+</head>
+<body>
+<form>
+<img id='s' src="neznakomka3.jpg" />
+<br>
+<input type="button" id='e2' value="изменить рамку на синюю"
+onClick="f()">
+</form>
+</body>

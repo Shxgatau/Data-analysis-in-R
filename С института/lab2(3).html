@@ -1,0 +1,35 @@
+<html>
+<head>
+<style type="text/css">
+h1 {color:red;text-align:center;}
+body {background-color:PaleGreen; font-weight:bold;}
+input {font-weight:bold;}
+</style>
+<script>
+function sqr()
+{
+// переменная р объект с именем t
+var p=document.getElementById('x');
+var x=p.value;
+var p=document.getElementById('y');
+var y=p.value;
+// переменная r содержит значение свойства value этого объекта
+var res= Math.sqrt(Math.pow(x,2)+Math.pow(y,2));
+alert(res);
+}
+</script>
+</head>
+<body>
+<h1>Расстояние от точки до начала координат</h1>
+<hr>
+<form>
+Введите координаты точки:
+X:
+<input type=text value="1" id='x' name="x" size="5">
+Y:
+<input type=text value="1" id='y' name="y" size="5">
+<input type=button value="Расстояние" OnClick="sqr()">
+<hr>
+</form>
+</body>
+</html>

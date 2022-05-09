@@ -1,0 +1,274 @@
+---
+title: "Задачи на R по курсу Основы статистики часть 2"
+author: "Shigatau"
+date: "23 08 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Подключение датасетов и пакетов
+```{r}
+library(ggplot2)
+library(dplyr)
+library(gvlma)
+data('mtcars')
+```
+
+## Анализ номинативных данных
+Напишите функцию smart_test, которая получает на вход dataframe с двумя номинативными переменными с произвольным числом градаций. Функция должна проверять гипотезу о независимости этих двух переменных при помощи критерия хи - квадрат или точного критерия Фишера.
+
+Если хотя бы в одной ячейке таблицы сопряженности двух переменных меньше 5 наблюдений, функция должна рассчитывать точный критерий Фишера и возвращать вектор из одного элемента: получившегося p - уровня значимости.
+
+Если наблюдений достаточно для расчета хи-квадрат (во всех ячейках больше либо равно 5 наблюдений), тогда функция должна применять критерий хи-квадрат и возвращать вектор из трех элементов: значение хи-квадрат, число степеней свободы,  p-уровня значимости.
+```{r}
+smart_test <-  function(x){
+  temp <- table(x)
+  ifelse(any(temp<5), return(fisher.test(temp)$p.value),return(as.numeric(chisq.test(temp)[c(1,2,3)])))
+  
+}
+smart_test(mtcars[,c("am", "vs")])
+```
+
+Для каждой переменной мы можем проверить нулевую гипотезу о том, что все нуклеотиды (A, T, G, C) встречаются равновероятно внутри этой последовательности. Однако, возможно, что в некоторых последовательностях распределение частоты встречаемости каждого нуклеотида отличается от равномерного.
+
+Функция должна возвращать вектор с ﻿названием переменной (или переменных), в которой был получен минимальный p - уровень значимости при проверке гипотезы о равномерном распределении нуклеотидов при помощи критерия хи - квадрат. 
+```{r}
+most_significant <-  function(x){
+  res <- sapply(1:ncol(x), function(x,y) chisq.test(table(y[,x]))$p.value, y=x)
+  res <- colnames(x)[res==min(res)]
+  return(res)
+}
+```
+
+Создайте новую переменную important_cases - фактор с двумя градациями ("No" и "Yes"). Переменная должна принимать значение Yes, если для данного цветка значения хотя бы трех количественных переменных выше среднего. В противном случае переменная important_cases  будет принимать значение No.
+```{r}
+iris <- dplyr::mutate(iris, important_cases=as.factor(ifelse(apply(sapply(iris[1:4], function(x) x>mean(x)), 1, function(x) sum(x)>=3), 'Yes', 'No')))
+table(iris$important_cases)
+```
+
+Обобщим предыдущую задачу! Напишем функцию get_important_cases, которая принимает на вход dataframe с произвольным числом количественных переменных (гарантируется хотя бы две переменные). Функция должна возвращать dataframe с новой переменной - фактором important_cases.
+```{r}
+get_important_cases <- function(x){
+  res <- dplyr::mutate(x, important_cases=factor(ifelse(
+    apply(sapply(test_data, function(x) x>mean(x)), 1, function(x) sum(x)>=mean(1:ncol(test_data))), 
+    'Yes', 'No'), levels=c("No", "Yes")))
+  return(res)
+}
+test_data <- data.frame(V1 = c(16, 21, 18), V2 = c(17, 7, 16), V3 = c(25, 23, 27), V4 = c(20, 22, 18), V5 = c(16, 17, 19))
+get_important_cases(test_data)
+```
+
+Напишите функцию stat_mode, которая получает на вход вектор из чисел произвольной длины и возвращает числовой вектор с наиболее часто встречаемым значением. Если наиболее часто встречаемых значений несколько, функция должна возвращать несколько значений моды  в виде числового вектора.
+```{r}
+stat_mode <- function(x){
+  return(as.numeric(names(which(table(x)==max(table(x))))))
+  
+}
+v <- c(1, 1, 1, 2, 3, 3, 3)
+stat_mode(v)
+```
+
+Функция должна находить ячейку таблицы сопряженности с максимальным  значением стандартизированного остатка и возвращать вектор из двух элементов: название строчки и столбца этой ячейки.
+
+Для расчета стандартизированных остатков вы можете воспользоваться уже знакомой вам функцией chisq.test(). Изучите справку по этой функции, чтобы найти, где хранятся стандартизированные остатки.
+```{r}
+max_resid <- function(x){
+  tab_x <- table(x)
+  res <- which(chisq.test(tab_x)$stdres==max(chisq.test(tab_x)$stdres), arr.ind = T)
+  col <- colnames(tab_x)[res[2]]
+  row <- rownames(tab_x)[res[1]]
+  return(c(row, col))
+}
+test_data <- read.csv("https://stepic.org/media/attachments/course/524/test_drugs.csv")
+max_resid(test_data)
+```
+
+Напишите функцию get_coefficients, которая получает на вход dataframe с двумя переменными x ( фактор с произвольным числом градаций) и y ( фактор с двумя градациями ﻿). Функция строит логистическую модель, где y — зависимая переменная, а x — независимая, и возвращает вектор со значением экспоненты коэффициентов модели. 
+```{r}
+get_coefficients <- function(dataset) {
+  fit <- glm(y~x, dataset, family='binomial') 
+  res <- sapply(fit$coefficients, exp)
+  return(res)
+}
+
+test_data <- read.csv("https://stepik.org/media/attachments/course/524/test_data_01.csv")
+test_data <- transform(test_data, x = factor(x), y = factor(y))
+get_coefficients(test_data)
+```
+Если в нашей модели есть количественные предикторы, то в интерцепте мы будем иметь значение, соответствующее базовому уровню категориальных предикторов и нулевому уровню количественных. Это не всегда осмысленно. Например, нам не интересен прогноз для людей нулевого возраста или роста. В таких ситуациях количественную переменную имеет смысл предварительно центрировать так, чтобы ноль являлся средним значением переменной. Самый простой способ центрировать переменную — отнять от каждого наблюдения среднее значение всех наблюдений.
+
+В этом задании вашей задачей будет  написать функцию centered, которая получает на вход датафрейм и имена переменных, которые необходимо центрировать так, как это описано выше. Функция должна возвращать этот же датафрейм, только с центрированными указанными переменными.
+```{r}
+library(dplyr)
+centered <- function(test_data, var_names){
+  mutate_at(test_data, vars(var_names), function(x) x=x-mean(x))
+}
+```
+
+Напишите функцию get_features , которая получает на вход набор данных о багаже. Строит логистическую регрессию, где зависимая переменная  - являлся ли багаж запрещенным, а предикторы - остальные переменные,﻿ и возвращает вектор с названиями статистически значимых переменных (p < 0.05) (в модели без взаимодействия). Если в данных нет значимых предикторов, функция возвращает строку с сообщением  "Prediction makes no sense".
+```{r}
+get_features <- function(dataset){
+  dataset$is_prohibited <- as.factor(dataset$is_prohibited)
+  fit <- glm(is_prohibited~., dataset, family='binomial')
+  result <- anova(fit, test = "Chisq")
+  res <- colnames(dataset[which(result$`Pr(>Chi)`<0.05)])
+  ifelse(length(res)==0, return("Prediction makes no sense"), return(res))
+  
+}
+```
+
+Используя первый набор данных, обучите регрессионную модель различать запрещенный и разрешенный багаж. При помощи полученной модели для каждого наблюдения в новых данных предскажите вероятность того, что багаж является запрещенным. Пассажиров, чей багаж получил максимальное значение вероятности, мы попросим пройти дополнительную проверку. 
+
+Итого, ваша функция принимает два набора данных и возвращает имя пассажира с наиболее подозрительным багажом. Если несколько пассажиров получили максимальное значение вероятности, то верните вектор с несколькими именами. 
+```{r}
+most_suspicious <- function(test_data, data_for_predict){
+  test_data$is_prohibited <- as.factor(test_data$is_prohibited)
+  fit <- glm(is_prohibited~., test_data, family='binomial')
+  predicted <- predict(fit, data_for_predict[-5], type='response')
+  res <- data_for_predict[which(predicted == max(predicted)), 5]
+  return(res)
+}
+```
+
+Напишите функцию smart_anova, которая получает на вход dataframe с двумя переменными x и y. Переменная x — это количественная переменная, переменная y - фактор, разбивает наблюдения на три группы.
+
+Если распределения во всех группах значимо не отличаются от нормального, а дисперсии в группах гомогенны, функция должна сравнить три группы при помощи дисперсионного анализа и вернуть именованный вектор со значением p-value, имя элемента — "ANOVA".
+
+Если хотя бы в одной группе распределение значимо отличается от нормального или дисперсии негомогенны, функция сравнивает группы при помощи критерия Краскела — Уоллиса и возвращает именованный вектор со значением p-value, имя вектора  — "KW".
+```{r}
+smart_anova <- function(test_data){
+  shap <- sapply(tapply(test_data$x, test_data$y, shapiro.test), function(x) x$p.value)
+  bart <- bartlett.test(test_data$x, test_data$y)$p.value
+  if (all(shap>0.05) & bart>0.05){
+    res <- c('ANOVA' = summary(aov(x~y, test_data))[[1]]$'Pr(>F)'[1])
+  } else {
+    res <- c('KW' = kruskal.test(x ~ y, test_data)$p.value)
+  }
+  return(res)
+  
+}
+```
+Напишите функцию normality_by, которая принимает на вход dataframe c тремя переменными. Первая переменная количественная, вторая и третья имеют две градации и разбивают наши наблюдения на группы. Функция должна проверять распределение на нормальность в каждой получившейся группе и возвращать dataframe с результатами применения теста ﻿ shapiro.test
+```{r}
+normality_by <- function(test){
+  library(dplyr)
+  library(lazyeval)
+  group_by_(test, .dots=names(test[,c(2,3)])) %>% 
+    summarize_(p_value=interp('shapiro.test(var)$p.value', var=as.name(names(test[1]))))
+  
+}
+```
+
+При помощи библиотеки ggplot2 визуализируйте распределение переменной Sepal.Length в трех группах в данных Iris. Сохраните график в переменную obj, но не выводите график на печать.
+```{r}
+obj <- ggplot(iris, aes(x=iris$Sepal.Length, fill=iris$Species))+
+  geom_density(alpha=0.2)
+```
+
+Напишите функцию smart_hclust, которая получает на вход dataframe  с произвольным числом количественных переменных и число кластеров, которое необходимо выделить при помощи иерархической кластеризации.
+
+Функция должна в исходный набор данных добавлять новую переменную фактор - cluster  -- номер кластера, к которому отнесено каждое из наблюдений.
+```{r}
+smart_hclust<-  function(test_data, cluster_number){
+  dist_matrix <- dist(test_data) 
+  fit <- hclust(dist_matrix)  
+  cluster <- cutree(fit, cluster_number)
+  test_data$cluster <- as.factor(cluster)
+  return(test_data)
+}
+```
+
+Интересной особенностью кластерного анализа является тот факт, что мы получаем только итоговый ответ, к какому кластеру принадлежит каждое наблюдение. Однако мы не знаем, по каким переменным различаются выделенные кластеры. Поэтому, если нас интересует не только сам факт того, что мы смогли выделить кластеры в наших данных, но мы также хотим понять, чем же они различаются, разумно сравнить кластеры между собой по имеющимся переменным.
+
+Напишите функцию get_difference, которая получает на вход два аргумента: 
+
+test_data — набор данных с произвольным числом количественных переменных.
+n_cluster — число кластеров, которое нужно выделить в данных при помощи иерархической кластеризации.
+
+Функция должна вернуть названия переменных, по которым были обнаружен значимые различия между выделенными кластерами (p < 0.05). Иными словами, после того, как мы выделили заданное число кластеров, мы добавляем в исходные данные новую группирующую переменную — номер кластера, и сравниваем получившиеся группы между собой по количественным переменным при помощи дисперсионного анализа.
+```{r}
+get_difference <- function(test_data, n_cluster){    
+	dist_matrix <- dist(test_data)    
+	fit <- hclust(dist_matrix)    
+	test_data$cluster <- as.factor(cutree(fit, n_cluster))    
+	p_val <- sapply(test_data[,-ncol(test_data)],    
+		function(x) {summary(aov(x~cluster, test_data))[[1]][1,'Pr(>F)']})    
+	return(names(p_val)[p_val < 0.05])    
+}
+```
+```{r}
+get_difference<-  function(test_data, n_cluster){
+  dist_matrix <- dist(test_data) 
+  fit <- hclust(dist_matrix)  
+  cluster <- cutree(fit, n_cluster)
+  test_data$cluster <- as.factor(cluster)
+  anova_p <- sapply(1:ncol(test_data[-1]), function(x) anova(aov(test_data[,x]~cluster, test_data))$P[1])
+  colnames(test_data[which(anova_p<0.05)])
+}
+```
+
+Напишите функцию get_pc﻿, которая получает на вход dataframe с произвольным числом количественных переменных. Функция должна выполнять анализ главных компонент и добавлять в исходные данные две новые колонки со значениями первой и второй главной компоненты. Новые переменные должны называться "PC1"  и "PC2" соответственно.
+```{r}
+get_pc <- function(d){
+  res <- prcomp(d)
+  cbind(d, res$x[,c(1,2)])
+}
+```
+
+Усложним предыдущую задачу! Напишите функцию get_pca2, которая принимает на вход dataframe с произвольным числом количественных переменных. Функция должна рассчитать, какое минимальное число главных компонент объясняет больше 90% изменчивости в исходных данных и добавлять значения этих компонент в исходный dataframe в виде новых переменных.
+```{r}
+get_pca2 <- function(data){
+  fit <- prcomp(data)
+  res <- summary(fit)
+  cbind(data, res$x[,c(1:which(res$importance[3,]>0.9)[1])])
+}
+```
+
+Напишите функцию is_multicol, которая получает на вход dataframe произвольного размера с количественными переменными. Функция должна проверять существование строгой мультиколлинеарности, а именно наличие линейной комбинации между предикторами. Линейной комбинацией является ситуация, когда одна переменная может быть выражена через другую переменную при помощи уравнения V1 = k*V2+bV1=k∗V2+b.
+Например V1 = V2 + 4 или V1 = V2 - 5.
+
+Функция возвращает имена переменных, между которыми есть линейная зависимость или cобщение "There is no collinearity in the data".
+```{r}
+is_multicol <- function(d){    
+	d <- abs(cor(d))     
+	d[lower.tri(d)] <- 0    
+	diag(d) <- 0    
+	index <- which((1-d) < 1e-10, arr.ind = T)    
+	if (length(index) == 0){      
+		return('There is no collinearity in the data')    
+	} else {      
+		return(rownames(d)[index])      
+	}      
+}
+```
+
+```{r}
+is_multicol <- function(d){
+  cor_mat <- cor(d)
+  diag(cor_mat) <- 0
+  cor_mat <- round(cor_mat, 3)
+  res <- rownames(which(abs(cor_mat)==1, arr.ind = TRUE))
+  ifelse(is.null(res), return("There is no collinearity in the data"), return(res))
+}
+```
+
+В данных swiss, используя все переменные, выделите два кластера при помощи иерархической кластеризации и сохраните значение кластеров как фактор в переменную cluster. Затем визуализируйте взаимосвязь переменных  Education и  Catholic в двух выделенных кластерах
+```{r}
+# сначала создайте переменную cluster в данных swiss
+smart_hclust<-  function(test_data, cluster_number){
+  dist_matrix <- dist(test_data) 
+  fit <- hclust(dist_matrix)  
+  cluster <- cutree(fit, cluster_number)
+  test_data$cluster <- as.factor(cluster)
+  return(test_data)
+}
+swiss <- smart_hclust(swiss, 2)
+# дополните код, чтобы получить график
+library(ggplot2)
+my_plot <- ggplot(swiss, aes(Education, Catholic, col = cluster))+
+  geom_smooth(method='lm')+
+  geom_point()
+```
+

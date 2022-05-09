@@ -1,0 +1,116 @@
+<html>
+<head>
+<style>
+h1 {color:red;text-align:center;}
+body {background-color:PaleGreen; font-weight:bold;}
+.bl1 {background-color:white; }
+.bl2 {background-color:black; }
+.bl3 {background-color:blue; }
+#kar {position: absolute;}
+#left, #right,#mid { position: absolute; }
+#right {left:150px;}
+#mid {left:90px;}
+input {font-weight:bold;}
+</style>
+<script type="text/JavaScript">
+// получить значение из радиокнопок
+function validate()
+{
+var p = document.getElementById('h');
+
+var head=p.value;
+var p = document.getElementById('sub');
+var sub=p.value;
+console.log(sub);
+var k1;var k2;var k3;var st2;var st3;var st4;
+// переменная р1 радиокнопка с именем k1
+var p1=document.getElementById('k1');;
+// переменная р2 радиокнопка с именем k2
+var p2=document.getElementById('k2');
+// переменная р3 радиокнопка с именем k3
+var p3=document.getElementById('k3');
+// если выбрана 1-я радиокнопка
+if (p1.checked) {k1="'dog.jpeg'"; st2="<img src="+k1+"/>"} else st2 = "";
+// если выбрана 2-я радиокнопка
+if (p2.checked) {k2="'flower.jpeg'"; st3="<img src="+k2+"/>"} else st3 = "";
+// если выбрана 3-я радиокнопка
+if (p3.checked) {k3="'bigdaisy.jpeg'"; st4="<img src="+k3+"/>"} else st4 = "";
+var back;var font;
+for (i=1;i<4;i++){
+	var p = document.getElementById('c' + i);
+	if (p.selected && i==1) {back="white"}
+	if (p.selected && i==2) {back="black"}
+	if (p.selected && i==3) {back="blue"}
+}
+for (i=1;i<4;i++){
+	var p = document.getElementById('t' + i);
+	if (p.checked && i==1) {font="white"}
+	if (p.checked  && i==2) {font="black"}
+	if (p.checked  && i==3) {font="blue"}
+}
+var win=window.open("","","width=500,height=500");
+win.document.open();
+// переменная st содержит
+// сформированную таблицу стилей нового документа
+var st1="<head><style> body {background-color:"+back+"; color:"+font+";}</style></head><body><h2>"+head+"</h2><br>";
+var st5="<br><h3>"+sub+"<br><input type='button' value='Закрыть' onClick='window.close()' /></h3>";
+var st=st1+st2+st3+st4+st5;
+win.document.write(st);
+win.document.close();
+}
+</script>
+</head>
+<body>
+<form>
+<h1>Страничка по заказу</h1>
+Заголовок
+<input type="text" id="h" name="h" value="">
+<hr>
+
+Картинка
+<span id="kar">
+<input type='checkbox' id='k1' name='k1' />
+Собака <br>
+<input type='checkbox' id='k2' name='k2' />
+Одинокий цветок <br>
+<input type='checkbox' id='k3' name='k3' />
+Букет <br>
+</span>
+<br><br><br>
+<hr>
+Подпись
+<input type="text" id="sub" name="sub" value="">
+<hr>
+<div id="left">
+Цвет фона<br>
+<select>
+<option id='c1'>белый</option>
+<option id='c2'>черный</option>
+<option id='c3'>синий</option>
+</select> 
+
+</div>
+<div id="mid">
+<br>
+<span class="bl1">	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><br>
+<span class="bl2">	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	</span><br>
+<span class="bl3">	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	</span><br>
+
+</div>
+<div id="right">
+Цвет текста<br>
+<input type='radio' id='t1' name='v' checked />
+ <br />
+<input type='radio' id='t2' name='v' />
+ <br />
+<input type='radio' id='t3' name='v' />
+ <br />
+</div>
+<br><br><br><br>
+<div>
+<input type="button" value="Сбросить" onClick="reset()" />
+<input type="button" value="Показать" onClick="validate()" />
+</div>
+</form>
+</body>
+</html>
